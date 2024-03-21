@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 public class Game {
     private ArrayList<Board> game;
@@ -19,26 +20,46 @@ public class Game {
     public void printAllBoards() {
         for (int i = 1; i <= game.size(); i++) {
             System.out.println("Player " + i + "'s Board");
-            int[][] board = game.get(i).getBoard();
+            int[][] board = game.get(i - 1).getBoard();
             for (int[] row : board) {
-                System.out.format("%15s%15s%15s%n", (Object) row);
+                System.out.format("%s", (Object) Arrays.toString(row));
+                System.out.println();
             }
             System.out.println();
         }
     }
 
-    //Different return type? *Unfinished*
-    public void takeInput(int player) {
+    public void takeInput(int player, int diceRoll) {
         Scanner scan = new Scanner(System.in);
-        boolean rowValid = false;
+        boolean inputValid = false;
         int row = -1;
-        while (!rowValid) {
-            System.out.println("Player " + player + ", select the row you want place the number in(0-" + (game.get(player - 1).getBoard().length - 1) + "): ");
-            if (row < 0 || row > (game.get(player - 1).getBoard().length - 1)) {
-                rowValid = true;
+        int col = -1;
+        System.out.print("Player " + (player + 1) + ", select the position you want place the number in\nUse the format \"(row, column)\" where row is(0-" + (game.get(player).getBoard().length - 1) + ") and column is (0-" + (game.get(player).getBoard()[0].length - 1) + "): ");
+        String choice = scan.nextLine();
+        if (choice.contains("(") && choice.contains(",") && choice.contains(")")) {
+            choice = choice.replace(" ", "");
+            row = Integer.parseInt(choice.substring(choice.indexOf("(") + 1, choice.indexOf(",")));
+            col = Integer.parseInt(choice.substring(choice.indexOf(",") + 1, choice.indexOf(")")));
+            if (game.get(player).isValid(row, col)) {
+                inputValid = true;
+                game.get(player).setPos(row, col, diceRoll);
             }
         }
-
+        while (!inputValid) {
+            System.out.println("Invalid input. Try again");
+            System.out.print("Player " + (player + 1) + ", select the position you want place the number in\nUse the format \"(row, column)\" where row is(0-" + (game.get(player).getBoard().length - 1) + ") and column is (0-" + (game.get(player).getBoard()[0].length - 1) + "): ");
+            choice = scan.nextLine();
+            if (choice.contains("(") && choice.contains(",") && choice.contains(")")) {
+                choice = choice.replace(" ", "");
+                row = Integer.parseInt(choice.substring(choice.indexOf("(") + 1, choice.indexOf(",")));
+                col = Integer.parseInt(choice.substring(choice.indexOf(",") + 1, choice.indexOf(")")));
+                if (game.get(player).isValid(row, col)) {
+                    inputValid = true;
+                    game.get(player).setPos(row, col, diceRoll);
+                }
+            }
+        }
+        System.out.println();
     }
 
     public void playerWon() {
@@ -72,11 +93,15 @@ public class Game {
             int randomNum = roll();
             System.out.println("The dice rolled a " + randomNum);
             for (int p = 1; p <= players; p++) {
-                takeInput(i);
-
+                takeInput(p - 1, randomNum);
+                clearScreen();
+                printAllBoards();
             }
-            clearScreen();
+            if (i + 1 < game.get(0).getBoardSize()) {
+                clearScreen();
+            }
         }
+        playerWon();
     }
 
     public static void clearScreen() {
